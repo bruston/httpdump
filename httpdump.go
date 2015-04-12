@@ -9,16 +9,19 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"strings"
+
+	"github.com/bruston/handlers/gzipped"
 )
 
 func main() {
 	listen := flag.String("listen", ":8090", "The host and port to listen on.")
 	flag.Parse()
-
 	http.HandleFunc("/headers", headers)
 	http.HandleFunc("/status/", status)
 	http.HandleFunc("/ip", ip)
 	http.HandleFunc("/get", get)
+	http.Handle("/gzip", gzipped.New(http.HandlerFunc(gzippedResponse)))
 	log.Fatal(http.ListenAndServe(*listen, nil))
 }
 
@@ -57,6 +60,7 @@ func ip(w http.ResponseWriter, r *http.Request) {
 
 type request struct {
 	Args    url.Values  `json:"args"`
+	Gzipped bool        `json:"gzipped,omitempty"`
 	Headers http.Header `json:"headers"`
 	Origin  origin      `json:"origin"`
 	URL     string      `json:"url"`
@@ -72,16 +76,28 @@ func rawURL(r *http.Request) string {
 	return scheme + "://" + r.Host + r.URL.String()
 }
 
+func getReq(r *http.Request) request {
+	return request{
+		Args:    r.URL.Query(),
+		Headers: r.Header,
+		Origin:  getOrigin(r),
+		URL:     rawURL(r),
+	}
+}
+
 func get(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
-	req := request{
-		Args:    r.URL.Query(),
-		Headers: r.Header,
-		Origin:  getOrigin(r),
-		URL:     rawURL(r),
+	req := getReq(r)
+	writeJSON(w, req, http.StatusOK)
+}
+
+func gzippedResponse(w http.ResponseWriter, r *http.Request) {
+	req := getReq(r)
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		req.Gzipped = true
 	}
 	writeJSON(w, req, http.StatusOK)
 }
