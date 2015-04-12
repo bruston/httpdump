@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"path"
 	"strconv"
-	"strings"
 
 	"github.com/bruston/handlers/gzipped"
 )
@@ -96,7 +95,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 
 func gzippedResponse(w http.ResponseWriter, r *http.Request) {
 	req := getReq(r)
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+	if _, ok := w.(gzipped.GzipResponseWriter); ok {
 		req.Gzipped = true
 	}
 	writeJSON(w, req, http.StatusOK)
