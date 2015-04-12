@@ -41,24 +41,24 @@ func status(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(code)
 }
 
-type ipInfo struct {
-	Address      string `json:"address"`
+type origin struct {
+	IP           string `json:"ip"`
 	ForwardedFor string `json:"forwarded_for,omitempty"`
 }
 
-func getAddr(r *http.Request) ipInfo {
+func getOrigin(r *http.Request) origin {
 	host, _, _ := net.SplitHostPort(r.RemoteAddr)
-	return ipInfo{host, r.Header.Get("X-Forwarded-For")}
+	return origin{host, r.Header.Get("X-Forwarded-For")}
 }
 
 func ip(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, getAddr(r), http.StatusOK)
+	writeJSON(w, getOrigin(r), http.StatusOK)
 }
 
 type request struct {
 	Args    url.Values  `json:"args"`
 	Headers http.Header `json:"headers"`
-	IP      ipInfo      `json:"ip"`
+	Origin  origin      `json:"origin"`
 	URL     string      `json:"url"`
 }
 
@@ -80,7 +80,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 	req := request{
 		Args:    r.URL.Query(),
 		Headers: r.Header,
-		IP:      getAddr(r),
+		Origin:  getOrigin(r),
 		URL:     rawURL(r),
 	}
 	writeJSON(w, req, http.StatusOK)
