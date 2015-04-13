@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"flag"
 	"log"
@@ -22,6 +23,7 @@ func main() {
 	http.HandleFunc("/get", get)
 	http.Handle("/gzip", gzipped.New(http.HandlerFunc(gzippedResponse)))
 	http.HandleFunc("/user-agent", useragent)
+	http.HandleFunc("/bytes/", writeBytes)
 	log.Fatal(http.ListenAndServe(*listen, nil))
 }
 
@@ -108,4 +110,18 @@ func useragent(w http.ResponseWriter, r *http.Request) {
 	}
 	resp.UserAgent = r.Header.Get("User-Agent")
 	writeJSON(w, resp, http.StatusOK)
+}
+
+func writeBytes(w http.ResponseWriter, r *http.Request) {
+	n, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		http.Error(w, "n must be an integer", http.StatusBadRequest)
+		return
+	}
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(b)
 }
