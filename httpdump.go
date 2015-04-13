@@ -14,6 +14,11 @@ import (
 	"github.com/bruston/handlers/gzipped"
 )
 
+const (
+	errWantInteger           = "n must be an integer"
+	errStreamingNotSupported = "your client does not support streaing"
+)
+
 func main() {
 	listen := flag.String("listen", ":8090", "The host and port to listen on.")
 	flag.Parse()
@@ -24,11 +29,16 @@ func main() {
 	http.Handle("/gzip", gzipped.New(http.HandlerFunc(gzippedResponse)))
 	http.HandleFunc("/user-agent", useragent)
 	http.HandleFunc("/bytes/", writeBytes)
+	http.HandleFunc("/stream/", stream)
 	log.Fatal(http.ListenAndServe(*listen, nil))
 }
 
-func writeJSON(w http.ResponseWriter, data interface{}, code int) error {
+func jsonHeader(w http.ResponseWriter) {
 	w.Header().Set("Content-type", "application/json")
+}
+
+func writeJSON(w http.ResponseWriter, data interface{}, code int) error {
+	jsonHeader(w)
 	w.WriteHeader(code)
 	return json.NewEncoder(w).Encode(data)
 }
@@ -115,7 +125,7 @@ func useragent(w http.ResponseWriter, r *http.Request) {
 func writeBytes(w http.ResponseWriter, r *http.Request) {
 	n, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil {
-		http.Error(w, "n must be an integer", http.StatusBadRequest)
+		http.Error(w, errWantInteger, http.StatusBadRequest)
 		return
 	}
 	b := make([]byte, n)
@@ -124,4 +134,25 @@ func writeBytes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(b)
+}
+
+func stream(w http.ResponseWriter, r *http.Request) {
+	n, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		http.Error(w, errWantInteger, http.StatusBadRequest)
+		return
+	}
+	f, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, errStreamingNotSupported, http.StatusBadRequest)
+		return
+	}
+	req := getReq(r)
+	jsonHeader(w)
+	for i := 0; i < n; i++ {
+		if err := json.NewEncoder(w).Encode(req); err != nil {
+			return
+		}
+		f.Flush()
+	}
 }
