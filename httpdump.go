@@ -16,7 +16,7 @@ import (
 
 const (
 	errWantInteger           = "n must be an integer"
-	errStreamingNotSupported = "your client does not support streaing"
+	errStreamingNotSupported = "your client does not support streaming"
 )
 
 func main() {
