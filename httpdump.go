@@ -124,7 +124,7 @@ func useragent(w http.ResponseWriter, r *http.Request) {
 
 func writeBytes(w http.ResponseWriter, r *http.Request) {
 	n, err := strconv.Atoi(path.Base(r.URL.Path))
-	if err != nil {
+	if err != nil || n < 0 {
 		http.Error(w, errWantInteger, http.StatusBadRequest)
 		return
 	}
@@ -138,7 +138,7 @@ func writeBytes(w http.ResponseWriter, r *http.Request) {
 
 func stream(w http.ResponseWriter, r *http.Request) {
 	n, err := strconv.Atoi(path.Base(r.URL.Path))
-	if err != nil {
+	if err != nil || n < 0 {
 		http.Error(w, errWantInteger, http.StatusBadRequest)
 		return
 	}
