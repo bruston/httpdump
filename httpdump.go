@@ -21,6 +21,7 @@ func main() {
 	http.HandleFunc("/ip", ip)
 	http.HandleFunc("/get", get)
 	http.Handle("/gzip", gzipped.New(http.HandlerFunc(gzippedResponse)))
+	http.HandleFunc("/user-agent", useragent)
 	log.Fatal(http.ListenAndServe(*listen, nil))
 }
 
@@ -99,4 +100,12 @@ func gzippedResponse(w http.ResponseWriter, r *http.Request) {
 		req.Gzipped = true
 	}
 	writeJSON(w, req, http.StatusOK)
+}
+
+func useragent(w http.ResponseWriter, r *http.Request) {
+	var resp struct {
+		UserAgent string `json:"user-agent"`
+	}
+	resp.UserAgent = r.Header.Get("User-Agent")
+	writeJSON(w, resp, http.StatusOK)
 }
