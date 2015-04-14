@@ -22,7 +22,7 @@ const (
 )
 
 func main() {
-	listen := flag.String("listen", ":8090", "The host and port to listen on.")
+	listen := flag.String("listen", "127.0.0.1:8090", "The host and port to listen on.")
 	flag.Parse()
 	http.HandleFunc("/headers", headers)
 	http.HandleFunc("/status/", status)
