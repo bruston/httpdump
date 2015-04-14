@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 const (
 	errWantInteger           = "n must be an integer"
 	errStreamingNotSupported = "your client does not support streaming"
+	maxBytes                 = 102400
 )
 
 func main() {
@@ -124,8 +126,8 @@ func useragent(w http.ResponseWriter, r *http.Request) {
 
 func writeBytes(w http.ResponseWriter, r *http.Request) {
 	n, err := strconv.Atoi(path.Base(r.URL.Path))
-	if err != nil || n < 0 {
-		http.Error(w, errWantInteger, http.StatusBadRequest)
+	if err != nil || n < 0 || n > maxBytes {
+		http.Error(w, fmt.Sprintf("number of bytes must be in range: 0 - %d", maxBytes), http.StatusBadRequest)
 		return
 	}
 	b := make([]byte, n)
