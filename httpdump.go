@@ -21,6 +21,21 @@ const (
 	maxBytes                 = 102400
 )
 
+func defaultHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if o := r.Header.Get("Origin"); o != "" {
+			w.Header().Set("Access-Control-Allow-Origin", o)
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+			w.Header().Set("Access-Control-Allow-Headers",
+				"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		}
+		if r.Method == "OPTIONS" {
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	listen := flag.String("listen", "127.0.0.1:8090", "The host and port to listen on.")
 	flag.Parse()
@@ -32,7 +47,7 @@ func main() {
 	http.HandleFunc("/user-agent", useragent)
 	http.HandleFunc("/bytes/", writeBytes)
 	http.HandleFunc("/stream/", stream)
-	log.Fatal(http.ListenAndServe(*listen, nil))
+	log.Fatal(http.ListenAndServe(*listen, defaultHandler(http.DefaultServeMux)))
 }
 
 func jsonHeader(w http.ResponseWriter) {
