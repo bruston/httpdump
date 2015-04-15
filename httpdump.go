@@ -19,6 +19,7 @@ const (
 	errWantInteger           = "n must be an integer"
 	errStreamingNotSupported = "your client does not support streaming"
 	maxBytes                 = 102400
+	maxLines                 = 100
 )
 
 func defaultHandler(h http.Handler) http.Handler {
@@ -153,12 +154,20 @@ func writeBytes(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func min(a, b int) int {
+	if a <= b {
+		return a
+	}
+	return b
+}
+
 func stream(w http.ResponseWriter, r *http.Request) {
 	n, err := strconv.Atoi(path.Base(r.URL.Path))
 	if err != nil || n < 0 {
 		http.Error(w, errWantInteger, http.StatusBadRequest)
 		return
 	}
+	n = min(n, maxLines)
 	f, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, errStreamingNotSupported, http.StatusBadRequest)
