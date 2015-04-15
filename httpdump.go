@@ -44,8 +44,8 @@ func main() {
 	http.HandleFunc("/status/", status)
 	http.HandleFunc("/ip", ip)
 	http.HandleFunc("/get", get)
-	http.Handle("/gzip", gzipped.New(http.HandlerFunc(gzippedResponse)))
-	http.HandleFunc("/user-agent", useragent)
+	http.Handle("/gzip", gzipped.New(http.HandlerFunc(gzip)))
+	http.HandleFunc("/user-agent", userAgent)
 	http.HandleFunc("/bytes/", writeBytes)
 	http.HandleFunc("/stream/", stream)
 	log.Fatal(http.ListenAndServe(*listen, defaultHandler(http.DefaultServeMux)))
@@ -120,11 +120,10 @@ func get(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
-	req := getReq(r)
-	writeJSON(w, req, http.StatusOK)
+	writeJSON(w, getReq(r), http.StatusOK)
 }
 
-func gzippedResponse(w http.ResponseWriter, r *http.Request) {
+func gzip(w http.ResponseWriter, r *http.Request) {
 	req := getReq(r)
 	if _, ok := w.(gzipped.GzipResponseWriter); ok {
 		req.Gzipped = true
@@ -132,7 +131,7 @@ func gzippedResponse(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, req, http.StatusOK)
 }
 
-func useragent(w http.ResponseWriter, r *http.Request) {
+func userAgent(w http.ResponseWriter, r *http.Request) {
 	var resp struct {
 		UserAgent string `json:"user-agent"`
 	}
