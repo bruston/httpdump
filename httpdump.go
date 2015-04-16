@@ -74,25 +74,27 @@ func status(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(code)
 }
 
-type origin struct {
-	IP           string `json:"ip"`
-	ForwardedFor string `json:"forwarded_for,omitempty"`
-}
-
-func getOrigin(r *http.Request) origin {
+func getOrigin(r *http.Request) string {
 	host, _, _ := net.SplitHostPort(r.RemoteAddr)
-	return origin{host, r.Header.Get("X-Forwarded-For")}
+	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" && forwarded != host {
+		host = fmt.Sprintf("%s, %s", forwarded, host)
+	}
+	return host
 }
 
 func ip(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, getOrigin(r), http.StatusOK)
+	var o struct {
+		Origin string `json:"origin"`
+	}
+	o.Origin = getOrigin(r)
+	writeJSON(w, o, http.StatusOK)
 }
 
 type request struct {
 	Args    url.Values  `json:"args"`
 	Gzipped bool        `json:"gzipped,omitempty"`
 	Headers http.Header `json:"headers"`
-	Origin  origin      `json:"origin"`
+	Origin  string      `json:"origin"`
 	URL     string      `json:"url"`
 }
 
