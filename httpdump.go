@@ -20,6 +20,7 @@ const (
 	errStreamingNotSupported = "your client does not support streaming"
 	maxBytes                 = 102400
 	maxLines                 = 100
+	loopback                 = "127.0.0.1"
 )
 
 func defaultHandler(h http.Handler) http.Handler {
@@ -77,6 +78,9 @@ func status(w http.ResponseWriter, r *http.Request) {
 func getOrigin(r *http.Request) string {
 	host, _, _ := net.SplitHostPort(r.RemoteAddr)
 	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" && forwarded != host {
+		if host == loopback {
+			return forwarded
+		}
 		host = fmt.Sprintf("%s, %s", forwarded, host)
 	}
 	return host
