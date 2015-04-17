@@ -3,8 +3,6 @@ httpdump
 
 httpdump is a WIP [httpbin](https://httpbin.org) clone written in Go.
 
-I'm hosting a demo at http://httpdump.bruston.uk/ which is where the links in the endpoint section go to.
-
 ## Endpoints
 
 - [/ip](http://httpdump.bruston.uk/ip) returns an origin IP
