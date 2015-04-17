@@ -49,6 +49,7 @@ func main() {
 	http.HandleFunc("/user-agent", userAgent)
 	http.HandleFunc("/bytes/", writeBytes)
 	http.HandleFunc("/stream/", stream)
+	http.HandleFunc("/redirect-to", redirectTo)
 	log.Fatal(http.ListenAndServe(*listen, defaultHandler(http.DefaultServeMux)))
 }
 
@@ -186,4 +187,13 @@ func stream(w http.ResponseWriter, r *http.Request) {
 		}
 		f.Flush()
 	}
+}
+
+func redirectTo(w http.ResponseWriter, r *http.Request) {
+	dst := r.URL.Query().Get("url")
+	if _, err := url.Parse(dst); dst == "" || err != nil {
+		http.Error(w, "bad URL", http.StatusBadRequest)
+		return
+	}
+	http.Redirect(w, r, dst, http.StatusFound)
 }
