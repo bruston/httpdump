@@ -16,3 +16,4 @@ httpdump is a WIP [httpbin](https://httpbin.org) clone written in Go.
 - [/redirect-to?url=foo](http://httpdump.bruston.uk/redirect-to?url=http://example.com) redirect to URL *foo*
 - [/basic-auth/:user/:passwd](http://httpdump.bruston.uk/basic-auth/user/passwd) challenges Basic Auth
 - [/hidden-basic-auth/:user/:passwd](http://httpdump.bruston.uk/hidden-basic-auth/user/passwd) 404'd Basic Auth
+- [/delay/:n](http://httpdump.bruston.uk/delay/3) delay response for n-10 seconds
