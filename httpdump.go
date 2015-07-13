@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/bruston/handlers/gzipped"
 )
@@ -50,6 +51,8 @@ func main() {
 	http.HandleFunc("/bytes/", writeBytes)
 	http.HandleFunc("/stream/", stream)
 	http.HandleFunc("/redirect-to", redirectTo)
+	http.Handle("/basic-auth/", basicAuth(false))
+	http.Handle("/hidden-basic-auth/", basicAuth(true))
 	log.Fatal(http.ListenAndServe(*listen, defaultHandler(http.DefaultServeMux)))
 }
 
@@ -196,4 +199,30 @@ func redirectTo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, dst, http.StatusFound)
+}
+
+type authedResponse struct {
+	Authenticated bool   `json:"authenticated"`
+	User          string `json:"user"`
+}
+
+func basicAuth(hidden bool) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		params := strings.Split(r.URL.Path, "/")
+		if len(params) < 4 {
+			http.NotFound(w, r)
+			return
+		}
+		u, p, ok := r.BasicAuth()
+		if !ok || u != params[2] || p != params[3] {
+			if !hidden {
+				w.Header().Set("WWW-Authenticate", "Basic realm=\"httpdump\"")
+				w.WriteHeader(http.StatusUnauthorized)
+			} else {
+				http.NotFound(w, r)
+			}
+			return
+		}
+		writeJSON(w, authedResponse{true, u}, http.StatusOK)
+	})
 }

@@ -14,3 +14,5 @@ httpdump is a WIP [httpbin](https://httpbin.org) clone written in Go.
 - [/stream/:n](http://httpdump.bruston.uk/stream/20) streams n-100 JSON objects
 - [/bytes/:n](http://httpdump.bruston.uk/bytes/1024) returns n random bytes of binary data
 - [/redirect-to?url=foo](http://httpdump.bruston.uk/redirect-to?url=http://example.com) redirect to URL *foo*
+- [/basic-auth/:user/:passwd](http://httpdump.bruston.uk/basic-auth/user/passwd) challenges Basic Auth
+- [/hidden-basic-auth/:user/:passwd](http://httpdump.bruston.uk/hidden-basic-auth/user/passwd) 404'd Basic Auth
