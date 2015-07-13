@@ -12,6 +12,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bruston/handlers/gzipped"
 )
@@ -53,6 +54,7 @@ func main() {
 	http.HandleFunc("/redirect-to", redirectTo)
 	http.Handle("/basic-auth/", basicAuth(false))
 	http.Handle("/hidden-basic-auth/", basicAuth(true))
+	http.HandleFunc("/delay/", delay)
 	log.Fatal(http.ListenAndServe(*listen, defaultHandler(http.DefaultServeMux)))
 }
 
@@ -225,4 +227,17 @@ func basicAuth(hidden bool) http.Handler {
 		}
 		writeJSON(w, authedResponse{true, u}, http.StatusOK)
 	})
+}
+
+func delay(w http.ResponseWriter, r *http.Request) {
+	n, err := strconv.Atoi(path.Base(r.URL.Path))
+	if err != nil {
+		http.Error(w, "you must specify a delay", http.StatusBadRequest)
+		return
+	}
+	n = min(n, 10)
+	if n > 0 {
+		<-time.After(time.Second * time.Duration(n))
+	}
+	writeJSON(w, getReq(r), http.StatusOK)
 }
