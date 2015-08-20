@@ -27,10 +27,14 @@ const (
 
 var (
 	jsonPrettyPrint bool
+	debugOut        bool
 )
 
 func defaultHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if debugOut {
+			log.Printf("%s %s", r.Method, r.RequestURI)
+		}
 		if o := r.Header.Get("Origin"); o != "" {
 			w.Header().Set("Access-Control-Allow-Origin", o)
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -47,7 +51,9 @@ func defaultHandler(h http.Handler) http.Handler {
 func main() {
 	listen := flag.String("listen", "127.0.0.1:8090", "The host and port to listen on.")
 	flag.BoolVar(&jsonPrettyPrint, "pretty", false, "Pretty print json output")
+	flag.BoolVar(&debugOut, "debug", false, "Log requests to stdout")
 	flag.Parse()
+	http.HandleFunc("/", index)
 	http.HandleFunc("/headers", headers)
 	http.HandleFunc("/status/", status)
 	http.HandleFunc("/ip", ip)
@@ -81,7 +87,37 @@ func writeJSON(w http.ResponseWriter, data interface{}, code int) error {
 	return err
 }
 
+func index(w http.ResponseWriter, r *http.Request) {
+	const index = `<html>
+<body id='manpage'>
+<h1>httpdump(1): HTTP Request & Response Service</h1>
+
+<h2 id="ENDPOINTS">ENDPOINTS</h2>
+
+<ul>
+<li><a href="/" data-bare-link="true"><code>/</code></a> This page.</li>
+<li><a href="./ip" data-bare-link="true"><code>/ip</code></a> Returns Origin IP.</li>
+<li><a href="./user-agent" data-bare-link="true"><code>/user-agent</code></a> Returns user-agent.</li>
+<li><a href="./headers" data-bare-link="true"><code>/headers</code></a> Returns header dict.</li>
+<li><a href="./get" data-bare-link="true"><code>/get</code></a> Returns GET data.</li>
+<li><a href="./gzip" data-bare-link="true"><code>/gzip</code></a> Returns gzip-encoded data.</li>
+<li><a href="./status/418"><code>/status/:code</code></a> Returns given HTTP Status code.</li>
+<li><a href="./stream/20"><code>/stream/:n</code></a> Streams <em>n</em>–100 lines.</li>
+<li><a href="./bytes/1024"><code>/bytes/:n</code></a> Generates <em>n</em> random bytes of binary data, accepts optional <em>seed</em> integer parameter.</li>
+<li><a href="./redirect-to?url=http://example.com/"><code>/redirect-to?url=foo</code></a> 302 Redirects to the <em>foo</em> URL.</li>
+<li><a href="./basic-auth/user/passwd"><code>/basic-auth/:user/:passwd</code></a> Challenges HTTPBasic Auth.</li>
+<li><a href="./hidden-basic-auth/user/passwd"><code>/hidden-basic-auth/:user/:passwd</code></a> 404'd BasicAuth.</li>
+<li><a href="./delay/3"><code>/delay/:n</code></a> Delays responding for <em>n</em>–10 seconds.</li>
+</ul>
+</body>
+</html>
+`
+	w.Write([]byte(index))
+	return
+}
+
 func headers(w http.ResponseWriter, r *http.Request) {
+	r.Header.Add("Host", r.Host)
 	writeJSON(w, r.Header, http.StatusOK)
 }
 
@@ -132,12 +168,14 @@ func rawURL(r *http.Request) string {
 }
 
 func getReq(r *http.Request) request {
-	return request{
+	ret := request{
 		Args:    r.URL.Query(),
 		Headers: r.Header,
 		Origin:  getOrigin(r),
 		URL:     rawURL(r),
 	}
+	ret.Headers.Add("Host", r.Host)
+	return ret
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
