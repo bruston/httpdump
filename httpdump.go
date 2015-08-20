@@ -25,6 +25,10 @@ const (
 	loopback                 = "127.0.0.1"
 )
 
+var (
+	jsonPrettyPrint bool
+)
+
 func defaultHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if o := r.Header.Get("Origin"); o != "" {
@@ -42,6 +46,7 @@ func defaultHandler(h http.Handler) http.Handler {
 
 func main() {
 	listen := flag.String("listen", "127.0.0.1:8090", "The host and port to listen on.")
+	flag.BoolVar(&jsonPrettyPrint, "pretty", false, "Pretty print json output")
 	flag.Parse()
 	http.HandleFunc("/headers", headers)
 	http.HandleFunc("/status/", status)
@@ -65,7 +70,15 @@ func jsonHeader(w http.ResponseWriter) {
 func writeJSON(w http.ResponseWriter, data interface{}, code int) error {
 	jsonHeader(w)
 	w.WriteHeader(code)
-	return json.NewEncoder(w).Encode(data)
+	if !jsonPrettyPrint {
+		return json.NewEncoder(w).Encode(data)
+	}
+	out, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(out)
+	return err
 }
 
 func headers(w http.ResponseWriter, r *http.Request) {
