@@ -27,10 +27,14 @@ const (
 
 var (
 	jsonPrettyPrint bool
+	debugOut        bool
 )
 
 func defaultHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if debugOut {
+			log.Printf("%s %s", r.Method, r.RequestURI)
+		}
 		if o := r.Header.Get("Origin"); o != "" {
 			w.Header().Set("Access-Control-Allow-Origin", o)
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
@@ -47,6 +51,7 @@ func defaultHandler(h http.Handler) http.Handler {
 func main() {
 	listen := flag.String("listen", "127.0.0.1:8090", "The host and port to listen on.")
 	flag.BoolVar(&jsonPrettyPrint, "pretty", false, "Pretty print json output")
+	flag.BoolVar(&debugOut, "debug", false, "Log requests to stdout")
 	flag.Parse()
 	http.HandleFunc("/headers", headers)
 	http.HandleFunc("/status/", status)
