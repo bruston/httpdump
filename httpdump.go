@@ -117,6 +117,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func headers(w http.ResponseWriter, r *http.Request) {
+	r.Header.Add("Host", r.Host)
 	writeJSON(w, r.Header, http.StatusOK)
 }
 
@@ -167,12 +168,14 @@ func rawURL(r *http.Request) string {
 }
 
 func getReq(r *http.Request) request {
-	return request{
+	ret := request{
 		Args:    r.URL.Query(),
 		Headers: r.Header,
 		Origin:  getOrigin(r),
 		URL:     rawURL(r),
 	}
+	ret.Headers.Add("Host", r.Host)
+	return ret
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
