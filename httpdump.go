@@ -113,7 +113,6 @@ func index(w http.ResponseWriter, r *http.Request) {
 </html>
 `
 	w.Write([]byte(index))
-	return
 }
 
 func headers(w http.ResponseWriter, r *http.Request) {
