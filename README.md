@@ -1,7 +1,9 @@
 httpdump
 ========
 
-httpdump is a WIP [httpbin](https://httpbin.org) clone written in Go.
+httpdump is a [httpbin](https://httpbin.org) clone written in Go.
+
+**Abandoned** see https://github.com/ahmetalpbalkan/go-httpbin for a more complete implementation.
 
 ## Endpoints
 
